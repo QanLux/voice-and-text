@@ -2,7 +2,9 @@ import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, Mic, MicOff } from "lucide-react";
+import { MessageBubble } from "@/components/ui/message-bubble";
+import { TypingIndicator } from "@/components/ui/typing-indicator";
+import { Send, Mic, MicOff, Hash, Volume2 } from "lucide-react";
 
 interface Message {
   id: string;
@@ -49,6 +51,7 @@ export const ChatArea = ({
   onLeaveVoice,
 }: ChatAreaProps) => {
   const [messageInput, setMessageInput] = useState("");
+  const [typingUsers] = useState<string[]>([]); // Mock typing users
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -76,9 +79,12 @@ export const ChatArea = ({
   if (!channel) {
     return (
       <div className="flex-1 flex items-center justify-center bg-bg-chat">
-        <div className="text-center text-muted-foreground">
+        <div className="text-center text-muted-foreground animate-fade-in">
+          <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-bg-secondary flex items-center justify-center animate-bounce-in">
+            <Hash className="h-8 w-8 text-discord-primary" />
+          </div>
           <h3 className="text-xl font-semibold mb-2">Welcome to DiscordMVP</h3>
-          <p>Select a channel to start chatting</p>
+          <p className="text-sm">Select a channel to start chatting with your community</p>
         </div>
       </div>
     );
@@ -87,12 +93,21 @@ export const ChatArea = ({
   return (
     <div className="flex-1 flex flex-col bg-bg-chat">
       {/* Channel Header */}
-      <div className="h-12 bg-bg-secondary border-b border-border/50 flex items-center justify-between px-4">
-        <div className="flex items-center">
-          <span className="text-muted-foreground mr-2">
-            {channel.type === 'text' ? '#' : '🔊'}
-          </span>
-          <h3 className="font-semibold text-foreground">{channel.name}</h3>
+      <div className="h-14 bg-bg-secondary border-b border-border/50 flex items-center justify-between px-4 backdrop-blur-sm animate-slide-in-left">
+        <div className="flex items-center space-x-3">
+          <div className="p-1.5 rounded-lg bg-bg-tertiary">
+            {channel.type === 'text' ? (
+              <Hash className="h-4 w-4 text-discord-primary" />
+            ) : (
+              <Volume2 className="h-4 w-4 text-discord-success" />
+            )}
+          </div>
+          <div>
+            <h3 className="font-semibold text-foreground">{channel.name}</h3>
+            <p className="text-xs text-muted-foreground">
+              {channel.type === 'text' ? 'Text channel' : 'Voice channel'}
+            </p>
+          </div>
         </div>
         
         {channel.type === 'voice' && (
@@ -129,62 +144,70 @@ export const ChatArea = ({
       </div>
 
       {/* Messages Area */}
-      <ScrollArea className="flex-1 p-4">
-        <div className="space-y-4">
+      <ScrollArea className="flex-1">
+        <div className="p-4">
           {messages.length === 0 ? (
-            <div className="text-center text-muted-foreground py-8">
-              <p>No messages yet. Start the conversation!</p>
+            <div className="text-center text-muted-foreground py-12 animate-fade-in">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-bg-secondary flex items-center justify-center">
+                {channel.type === 'text' ? (
+                  <Hash className="h-6 w-6 text-discord-primary" />
+                ) : (
+                  <Volume2 className="h-6 w-6 text-discord-success" />
+                )}
+              </div>
+              <h4 className="text-lg font-medium mb-2">
+                Welcome to #{channel.name}!
+              </h4>
+              <p className="text-sm">
+                {channel.type === 'text' 
+                  ? "This is the start of your conversation. Say hello!" 
+                  : "Join the voice channel to start talking with your community."
+                }
+              </p>
             </div>
           ) : (
-            messages.map((message) => (
-              <div key={message.id} className="flex space-x-3">
-                <div className="flex-shrink-0">
-                  {message.author.avatar ? (
-                    <img
-                      src={message.author.avatar}
-                      alt={message.author.username}
-                      className="w-8 h-8 rounded-full"
-                    />
-                  ) : (
-                    <div className="w-8 h-8 rounded-full bg-discord-primary flex items-center justify-center text-sm font-semibold">
-                      {message.author.username.charAt(0).toUpperCase()}
-                    </div>
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-baseline space-x-2">
-                    <span className="font-semibold text-foreground">
-                      {message.author.username}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      {message.timestamp.toLocaleTimeString()}
-                    </span>
-                  </div>
-                  <p className="text-foreground mt-1 break-words">{message.content}</p>
-                </div>
-              </div>
-            ))
+            <div className="space-y-1">
+              {messages.map((message, index) => {
+                const prevMessage = messages[index - 1];
+                const isConsecutive = prevMessage && 
+                  prevMessage.author.id === message.author.id &&
+                  message.timestamp.getTime() - prevMessage.timestamp.getTime() < 300000; // 5 minutes
+                
+                return (
+                  <MessageBubble
+                    key={message.id}
+                    message={message}
+                    isConsecutive={isConsecutive}
+                  />
+                );
+              })}
+            </div>
           )}
+          
+          <TypingIndicator users={typingUsers} />
           <div ref={messagesEndRef} />
         </div>
       </ScrollArea>
 
       {/* Message Input */}
       {channel.type === 'text' && (
-        <div className="p-4 border-t border-border/50">
-          <div className="flex space-x-2">
-            <Input
-              value={messageInput}
-              onChange={(e) => setMessageInput(e.target.value)}
-              onKeyPress={handleKeyPress}
-              placeholder={`Message #${channel.name}`}
-              className="flex-1 bg-bg-secondary border-border/50"
-            />
+        <div className="p-4 border-t border-border/50 bg-bg-secondary/50 backdrop-blur-sm">
+          <div className="flex space-x-3 items-end">
+            <div className="flex-1 relative">
+              <Input
+                value={messageInput}
+                onChange={(e) => setMessageInput(e.target.value)}
+                onKeyPress={handleKeyPress}
+                placeholder={`Message #${channel.name}`}
+                className="bg-bg-tertiary border-border/50 rounded-lg py-3 px-4 resize-none min-h-[44px] focus:ring-2 focus:ring-discord-primary/50 transition-all duration-200"
+              />
+            </div>
             <Button
-              variant="discord"
+              variant={messageInput.trim() ? "discord" : "ghost"}
               size="icon"
               onClick={handleSendMessage}
               disabled={!messageInput.trim()}
+              className="h-11 w-11 rounded-lg transition-all duration-200 hover:scale-105"
             >
               <Send className="h-4 w-4" />
             </Button>
