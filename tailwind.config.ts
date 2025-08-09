@@ -61,12 +61,40 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
-				}
+				},
+				// Discord-specific colors
+				discord: {
+					primary: 'hsl(var(--discord-primary))',
+					secondary: 'hsl(var(--discord-secondary))',
+					success: 'hsl(var(--discord-success))',
+					warning: 'hsl(var(--discord-warning))',
+					danger: 'hsl(var(--discord-danger))'
+				},
+				// Background variations
+				'bg-primary': 'hsl(var(--bg-primary))',
+				'bg-secondary': 'hsl(var(--bg-secondary))',
+				'bg-tertiary': 'hsl(var(--bg-tertiary))',
+				'bg-chat': 'hsl(var(--bg-chat))'
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
 				md: 'calc(var(--radius) - 2px)',
 				sm: 'calc(var(--radius) - 4px)'
+			},
+			backgroundImage: {
+				'gradient-primary': 'var(--gradient-primary)',
+				'gradient-hero': 'var(--gradient-hero)',
+				'gradient-card': 'var(--gradient-card)'
+			},
+			boxShadow: {
+				'primary': 'var(--shadow-primary)',
+				'secondary': 'var(--shadow-secondary)',
+				'glow-primary': 'var(--glow-primary)',
+				'glow-secondary': 'var(--glow-secondary)'
+			},
+			transitionTimingFunction: {
+				'smooth': 'var(--transition-smooth)',
+				'spring': 'var(--transition-spring)'
 			},
 			keyframes: {
 				'accordion-down': {
